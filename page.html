@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>template</title>
+    <script src="menu.js"></script>
+    <script src="score.js"></script>
+    <script src="hud.js"></script>
+  </head>
+  <body>
+    <canvas width="1080" height="620">
+        Seu browser não suporta canvas!</canvas>
+    <script>
+        var tela = document.getElementsByTagName("canvas")[0];
+        var ctx = tela.getContext("2d");
+        var menu  = new Menu();
+        var score = new Score();
+        var hud   = new Hud();
+        var dt = anterior = 0;
+        var estado = 0;
+        var pontos = 100;
+
+        var px = 100;
+        var py = 100;
+        var pr = 50;
+
+        function limparTela() {
+            ctx.fillStyle = "black";
+            ctx.fillRect(0, 0, tela.width, tela.height);
+        }
+        function passo(t) {
+            dt = (t - anterior) / 1000;
+            limparTela();
+            if(estado === 0) menu.desenha(ctx);
+            if(estado === 1) score.desenha(ctx);
+            if(estado === 2)
+            {
+              hud.desenha(ctx);
+              ctx.beginPath();
+              ctx.arc(this.px,this.py,this.pr,0,2*Math.PI);
+              ctx.fill();
+
+              ctx.beginPath();
+              ctx.arc(400,400,50,0,2*Math.PI);
+              ctx.fill();
+
+              if(colider(this.px,this.py,this.pr,50,400,400))
+              {
+                hud.life--;
+              }
+
+              this.px = borderX(this.px,this.pr);
+              this.py = borderY(this.py,this.pr);
+            }
+
+            verificaFim();
+
+            anterior = t;
+            requestAnimationFrame(passo);
+        }
+        requestAnimationFrame(passo);
+
+        function verificaFim(){
+          if (hud.life<1){
+            score.placar.push(pontos);
+            hud.life=200;
+          }
+        }
+        function colider(xa,ya,ra,rb,xb,yb){
+          if(Math.sqrt(Math.pow(xa-xb,2)+Math.pow(ya-yb,2))<ra+rb)
+            return true
+          else {
+            return false
+          }
+        }
+
+        function borderX(x,r){
+          if(x+r>1080)
+            x=1080-r-1;
+          if(x-r<0)
+            x=0+r+1;
+          return x
+        }
+        function borderY(y,r){
+          if(y+r>620)
+            y=620-r-1;
+          if(y-r<0)
+            y=0+r+1;
+          return y
+        }
+
+        addEventListener("keydown", function (e) {
+          e.preventDefault();
+          if(estado === 0) menu.controle(e.keyCode);
+          else{
+            switch (e.keyCode) {
+                case 37:
+                this.px-=1;
+                  break;
+                case 39:
+                this.px+=1;
+                  break;
+                case 38:
+                this.py-=1;
+                  break;
+                case 40:
+                this.py+=1;
+                  break;
+                default:
+                  break;
+            }
+          }
+        });
+        addEventListener("keyup", function (e) {
+            switch (e.keyCode) {
+                case 37:
+                  break;
+                case 39:
+                  break;
+                case 38:
+                  break;
+                case 40:
+                  break;
+                case 27:
+                  estado = 0;
+                  break;
+                default:
+                  break;
+            }
+        });
+    </script>
+  </body>
+</html>
