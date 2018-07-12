@@ -6,6 +6,9 @@
     <script src="menu.js"></script>
     <script src="score.js"></script>
     <script src="hud.js"></script>
+    <script src="imageLibrary.js"></script>
+    <script src="audioLibrary.js"></script>
+    <script src="player.js"></script>
   </head>
   <body>
     <canvas width="1080" height="620">
@@ -16,13 +19,15 @@
         var menu  = new Menu();
         var score = new Score();
         var hud   = new Hud();
+        var player = new Player(25,100,100);
         var dt = anterior = 0;
-        var estado = 0;
-        var pontos = 100;
+        var estado = 2;
+        var pontos = 0;
 
-        var px = 100;
-        var py = 100;
-        var pr = 50;
+        var sondControl = new AudioLibrary();
+
+        var spritesControl = new ImageLibrary();
+
 
         function limparTela() {
             ctx.fillStyle = "black";
@@ -35,22 +40,23 @@
             if(estado === 1) score.desenha(ctx);
             if(estado === 2)
             {
-              hud.desenha(ctx);
-              ctx.beginPath();
-              ctx.arc(this.px,this.py,this.pr,0,2*Math.PI);
-              ctx.fill();
 
-              ctx.beginPath();
-              ctx.arc(400,400,50,0,2*Math.PI);
-              ctx.fill();
+              player.desenha(ctx);
+              player.move(dt);
 
-              if(colider(this.px,this.py,this.pr,50,400,400))
+              if(colider(player.x,player.y,player.r,50,400,400) || coliderWall(player.x,player.y,player.r,150, 150, 300, 400))
               {
                 hud.life--;
               }
 
-              this.px = borderX(this.px,this.pr);
-              this.py = borderY(this.py,this.pr);
+              player.x = borderX(player.x,player.r);
+              player.y = borderY(player.y,player.r);
+
+              ctx.fillStyle = "red";
+              ctx.fillRect(150, 150, 300, 400);
+
+
+              hud.desenha(ctx);
             }
 
             verificaFim();
@@ -64,6 +70,7 @@
           if (hud.life<1){
             score.placar.push(pontos);
             hud.life=200;
+            this.estado = 0;
           }
         }
         function colider(xa,ya,ra,rb,xb,yb){
@@ -84,10 +91,20 @@
         function borderY(y,r){
           if(y+r>620)
             y=620-r-1;
-          if(y-r<0)
-            y=0+r+1;
+          if(y-r<50)
+            y=50+r+1;
           return y
         }
+        function coliderWall(xa,ya,ra,x1,y1,x2,y2){
+          x2=x2+x1;
+          y2=y2+y1;
+          if((x1-ra<xa)&&(x2+ra>xa)&&(y1-ra<ya)&&(y2+ra>ya))
+            return true
+          else {
+            return false
+          }
+        }
+
 
         addEventListener("keydown", function (e) {
           e.preventDefault();
@@ -95,17 +112,19 @@
           else{
             switch (e.keyCode) {
                 case 37:
-                this.px-=1;
+                player.vx=-200;
                   break;
                 case 39:
-                this.px+=1;
+                player.vx=200;
                   break;
                 case 38:
-                this.py-=1;
+                player.vy=-200;
                   break;
                 case 40:
-                this.py+=1;
+                player.vy=200;
                   break;
+                case 32:
+                break;
                 default:
                   break;
             }
@@ -113,14 +132,20 @@
         });
         addEventListener("keyup", function (e) {
             switch (e.keyCode) {
-                case 37:
-                  break;
-                case 39:
-                  break;
-                case 38:
-                  break;
-                case 40:
-                  break;
+              case 37:
+              player.vx=-0;
+                break;
+              case 39:
+              player.vx=0;
+                break;
+              case 38:
+              player.vy=-0;
+                break;
+              case 40:
+              player.vy=0;
+                break;
+                case 32:
+                break;
                 case 27:
                   estado = 0;
                   break;

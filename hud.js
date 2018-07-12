@@ -1,5 +1,5 @@
 function Hud(){
-  this.life=200;
+  this.life=0;
 }
 
 Hud.prototype.desenha = function(ctx){
