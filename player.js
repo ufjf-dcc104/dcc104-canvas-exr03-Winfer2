@@ -16,6 +16,7 @@ Player.prototype.desenha = function(ctx)
 
 Player.prototype.move = function(dt)
 {
+  this.vy = this.vy + 200*dt;
   this.x = this.x + this.vx*dt;
   this.y = this.y + this.vy*dt;
 }

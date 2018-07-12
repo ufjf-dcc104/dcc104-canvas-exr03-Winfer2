@@ -2,13 +2,14 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>template</title>
+    <title>Yoshi Jump</title>
     <script src="menu.js"></script>
     <script src="score.js"></script>
     <script src="hud.js"></script>
     <script src="imageLibrary.js"></script>
     <script src="audioLibrary.js"></script>
     <script src="player.js"></script>
+    <script src="walls.js"></script>
   </head>
   <body>
     <canvas width="1080" height="620">
@@ -19,16 +20,30 @@
         var menu  = new Menu();
         var score = new Score();
         var hud   = new Hud();
-        var player = new Player(25,100,100);
+        var player = new Player(20,100,310);
         var dt = anterior = 0;
         var estado = 2;
         var pontos = 0;
 
-        var sondControl = new AudioLibrary();
+        var soundControl = new AudioLibrary();
+
+        soundControl.load(0,"sounds/Jump.wav");
+        soundControl.load(1,"sounds/Redcoin.wav");
+        soundControl.load(2,"sounds/Piranha.wav");
+        soundControl.load(3,"sounds/Manana.wav");
+        soundControl.load(4,"sounds/bg.mp3");
+        var song = -183;
 
         var spritesControl = new ImageLibrary();
+        spritesControl.load(0,"sprites/player1.png");
+        spritesControl.load(1,"sprites/player2.png");
+        spritesControl.load(2,"sprites/wall1.png");
+        spritesControl.load(3,"sprites/wall2.png");
+        spritesControl.load(4,"sprites/bg.png");
+        spritesControl.load(5,"sprites/Menu.png");
+        spritesControl.load(6,"sprites/score.png");
 
-
+        bg=0;
         function limparTela() {
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, tela.width, tela.height);
@@ -36,24 +51,68 @@
         function passo(t) {
             dt = (t - anterior) / 1000;
             limparTela();
-            if(estado === 0) menu.desenha(ctx);
-            if(estado === 1) score.desenha(ctx);
+
+            song+=dt
+            if(song>=183){
+              soundControl.play(4);
+              song = 0;
+            }
+            if(estado === 0){
+              spritesControl.draw(ctx,5,0,0);
+              menu.desenha(ctx);
+            }
+            if(estado === 1)
+            {
+              spritesControl.draw(ctx,6,0,0);
+              score.desenha(ctx);
+            }
             if(estado === 2)
             {
-
-              player.desenha(ctx);
+              spritesControl.draw(ctx,4,0+bg,50);
+              spritesControl.draw(ctx,4,676+bg,50);
+              spritesControl.draw(ctx,4,1352+bg,50);
+              bg-=50*dt;
+              if(bg<=-676)bg=0;
+              if(player.vy<=0)
+              spritesControl.draw(ctx,1,player.x-15,player.y-20)
+              else
+              spritesControl.draw(ctx,0,player.x-15,player.y-20)
+              //player.desenha(ctx);
               player.move(dt);
 
-              if(colider(player.x,player.y,player.r,50,400,400) || coliderWall(player.x,player.y,player.r,150, 150, 300, 400))
+              spawn+=dt;
+              spawner();
+              for (i=0;i<this.inimigo.length;i++)
               {
-                hud.life--;
+                if(this.inimigo[i].x<-100){
+                  this.inimigo.splice(i,1);
+                }else{
+                  if(this.inimigo[i].x<player.x && !this.inimigo[i].passou){
+                    this.inimigo[i].passou=true;
+                    this.pontos+=5;
+                    soundControl.play(1);
+                    }
+                    //this.inimigo[i].desenha(ctx);
+                    if(this.inimigo[i].y==50){
+                      spritesControl.draw(ctx,3,this.inimigo[i].x,(this.inimigo[i].y1-460));
+                      spritesControl.draw(ctx,2,this.inimigo[i].x,this.inimigo[i].y+this.inimigo[i].y1+130);
+                      }
+                      //this.inimigo[i].desenha(ctx);
+                  if(coliderWall(player.x,player.y,player.r,this.inimigo[i].x, this.inimigo[i].y, this.inimigo[i].x1, this.inimigo[i].y1))
+                  {
+                    hud.life-=40;
+                    player.y = 310;
+                    this.inimigo = [];
+                    player.vy = 0;
+                    soundControl.play(2);
+                    break;
+                  }
+                  this.inimigo[i].move(dt);
               }
+            }
 
-              player.x = borderX(player.x,player.r);
               player.y = borderY(player.y,player.r);
 
-              ctx.fillStyle = "red";
-              ctx.fillRect(150, 150, 300, 400);
 
 
               hud.desenha(ctx);
@@ -71,6 +130,8 @@
             score.placar.push(pontos);
             hud.life=200;
             this.estado = 0;
+            this.pontos = 0;
+            soundControl.play(3);
           }
         }
         function colider(xa,ya,ra,rb,xb,yb){
@@ -88,13 +149,22 @@
             x=0+r+1;
           return x
         }
+
         function borderY(y,r){
-          if(y+r>620)
-            y=620-r-1;
-          if(y-r<50)
+          if(y+r>620){
+            hud.life-=40;
+            y = 310;
+            this.inimigo = [];
+            player.vy=0;
+            soundControl.play(2);
+          }
+          if(y-r<50){
+            player.vy=0;
             y=50+r+1;
+            }
           return y
         }
+
         function coliderWall(xa,ya,ra,x1,y1,x2,y2){
           x2=x2+x1;
           y2=y2+y1;
@@ -105,46 +175,26 @@
           }
         }
 
+        var spawn = 0;
+        this.inimigo = [];
+        function spawner(){
+          if(this.spawn>2.5){
+            this.inimigo.push(new Walls(1080,player.y+50,50,620-player.y,-150));
+            this.inimigo.push(new Walls(1080,50,50,player.y-130,-150));
+            this.spawn = 0;
+          }
+        }
 
         addEventListener("keydown", function (e) {
           e.preventDefault();
           if(estado === 0) menu.controle(e.keyCode);
-          else{
-            switch (e.keyCode) {
-                case 37:
-                player.vx=-200;
-                  break;
-                case 39:
-                player.vx=200;
-                  break;
-                case 38:
-                player.vy=-200;
-                  break;
-                case 40:
-                player.vy=200;
-                  break;
-                case 32:
-                break;
-                default:
-                  break;
-            }
-          }
+          if(song<0) song = 183;
         });
         addEventListener("keyup", function (e) {
             switch (e.keyCode) {
-              case 37:
-              player.vx=-0;
-                break;
-              case 39:
-              player.vx=0;
-                break;
-              case 38:
-              player.vy=-0;
-                break;
-              case 40:
-              player.vy=0;
-                break;
                 case 32:
+                soundControl.play(0);
+                player.vy=-200;
                 break;
                 case 27:
                   estado = 0;

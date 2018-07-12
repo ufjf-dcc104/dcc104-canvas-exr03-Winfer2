@@ -14,8 +14,8 @@ function Menu(){
   ctx.strokeRect(190, this.y, 160, 50);
 
   ctx.font = "40px Arial";
-  ctx.fillStyle = "red";
-  ctx.fillText("NOME DO JOGO",540,50);
+  ctx.fillStyle = "LawnGreen";
+  ctx.fillText("",540,50);
   ctx.fillText("START",200,200);
     ctx.fillText("SCORE",200,400);
 }
